@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>8 Towers — Formal Language Specification</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+
+      --bg: #0b0f14;
+      --surface: #111720;
+      --surface-2: #18212d;
+      --border: #2a3747;
+
+      --text: #e6edf3;
+      --muted: #9aa8b7;
+
+      --heading: #f5f7fa;
+      --accent: #7dd3fc;
+      --accent-2: #c084fc;
+
+      --code-bg: #080b0f;
+      --code-border: #263241;
+
+      --green: #86efac;
+      --yellow: #fde68a;
+      --orange: #fdba74;
+      --red: #fca5a5;
+      --blue: #93c5fd;
+      --purple: #d8b4fe;
+      --cyan: #67e8f9;
+
+      --shadow:
+        0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(
+          circle at top,
+          rgba(125, 211, 252, 0.06),
+          transparent 35rem
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(100% - 2rem, 980px);
+      margin: 0 auto;
+      padding: 3rem 0 6rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: var(--heading);
+      line-height: 1.25;
+      scroll-margin-top: 2rem;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    h3 {
+      margin-top: 2.25rem;
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    p {
+      margin: 1rem 0;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    strong {
+      color: #fff;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    /* -----------------------------
+       Index
+       ----------------------------- */
+
+    .index {
+      position: relative;
+      margin: 2rem 0 4rem;
+      padding: 1.5rem;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(125, 211, 252, 0.08),
+          rgba(192, 132, 252, 0.06)
+        ),
+        var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .index h2 {
+      margin: 0 0 1rem;
+      padding: 0;
+      border: 0;
+      color: var(--heading);
+    }
+
+    .index-list {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+
+    .index-list li {
+      margin: 0.3rem 0;
+    }
+
+    .index-list li::marker {
+      color: var(--accent);
+    }
+
+    .index-sublist {
+      margin: 0.25rem 0 0.75rem;
+      padding-left: 1.5rem;
+      list-style-type: circle;
+    }
+
+    .index-sublist li::marker {
+      color: var(--accent-2);
+    }
+
+    .version-label {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--cyan);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    /* -----------------------------
+       Section navigation
+       ----------------------------- */
+
+    .back-to-index {
+      display: block;
+      margin: 1.75rem 0 3rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(42, 55, 71, 0.6);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .back-to-index a {
+      color: var(--muted);
+    }
+
+    .back-to-index a:hover {
+      color: var(--accent);
+    }
+
+    /* -----------------------------
+       Blockquotes
+       ----------------------------- */
+
+    blockquote {
+      margin: 2rem 0;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border-left: 4px solid var(--accent-2);
+      border-radius: 0 10px 10px 0;
+      color: #cbd5e1;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    blockquote p:first-child {
+      margin-top: 0;
+    }
+
+    blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* -----------------------------
+       Code
+       ----------------------------- */
+
+    code {
+      padding: 0.12em 0.35em;
+      border: 1px solid rgba(125, 211, 252, 0.12);
+      border-radius: 4px;
+      background: rgba(125, 211, 252, 0.07);
+      color: var(--cyan);
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        Menlo,
+        monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      margin: 1.25rem 0;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 10px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+
+    pre code {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #d1d5db;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Colorized code concepts */
+
+    .bit {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .tower {
+      color: var(--green);
+    }
+
+    .number {
+      color: var(--yellow);
+    }
+
+    .operation {
+      color: var(--orange);
+    }
+
+    .realm {
+      color: var(--purple);
+    }
+
+    .operator {
+      color: var(--accent);
+    }
+
+    /* -----------------------------
+       Tables
+       ----------------------------- */
+
+    .table-wrapper {
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+    }
+
+    th,
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th {
+      background: var(--surface-2);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover {
+      background: rgba(125, 211, 252, 0.035);
+    }
+
+    /* -----------------------------
+       Lists
+       ----------------------------- */
+
+    li {
+      margin: 0.45rem 0;
+    }
+
+    /* -----------------------------
+       Callouts
+       ----------------------------- */
+
+    .callout {
+      margin: 1.5rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .callout strong {
+      color: var(--accent);
+    }
+
+    /* -----------------------------
+       Version divider
+       ----------------------------- */
+
+    .version-divider {
+      margin: 5rem 0 3rem;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(125, 211, 252, 0.08),
+          rgba(192, 132, 252, 0.08)
+        );
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .version-divider h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .version-divider h2 {
+      margin: 0.5rem 0 0;
+      padding: 0;
+      border: 0;
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    /* -----------------------------
+       Footer
+       ----------------------------- */
+
+    footer {
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    /* -----------------------------
+       Mobile
+       ----------------------------- */
+
+    @media (max-width: 650px) {
+      main {
+        width: min(100% - 1rem, 980px);
+        padding-top: 1.5rem;
+      }
+
+      h2 {
+        margin-top: 2.25rem;
+      }
+
+      pre {
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      th,
+      td {
+        padding: 0.6rem 0.7rem;
+      }
+
+      .index {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<main id="top">
+
+  <h1>8 Towers</h1>
+  <h2>Formal Language Specification 1.0</h2>
+
+  <blockquote>
+    <p>Eight towers. Eight trigrams. All opposites.</p>
+    <p>Everything has its counterpart.</p>
+    <p>Keep the towers in order and the machine will continue.</p>
+  </blockquote>
+
+  <!-- ============================================
+       INDEX
+       ============================================ -->
+
+  <nav class="index" aria-label="Table of contents">
+    <h2>Index</h2>
+
+    <span class="version-label">SPECIFICATION 1.0</span>
+
+    <ol class="index-list">
+      <li><a href="#v1-introduction">Introduction</a></li>
+      <li><a href="#v1-terminology">Terminology</a></li>
+      <li><a href="#v1-design-philosophy">Design Philosophy</a></li>
+      <li><a href="#v1-machine-state">Machine State</a></li>
+      <li><a href="#v1-tower-invariant">The Tower Invariant</a></li>
+      <li><a href="#v1-arithmetic">Arithmetic and Teleports</a></li>
+      <li><a href="#v1-program-representation">Program Representation</a></li>
+      <li>
+        <a href="#v1-execution">Execution and the Eight Trigrams</a>
+        <ol class="index-sublist">
+          <li><a href="#v1-moving-around">Moving Around</a></li>
+          <li><a href="#v1-changing-values">Changing Values</a></li>
+          <li><a href="#v1-receiving">Receiving</a></li>
+          <li><a href="#v1-giving">Giving</a></li>
+        </ol>
+      </li>
+      <li><a href="#v1-loops">Loops</a></li>
+      <li><a href="#v1-loop-errors">Loop Errors</a></li>
+      <li><a href="#v1-crashes">Crashes and Termination</a></li>
+      <li><a href="#v1-designing">Designing a Tower</a></li>
+    </ol>
+
+    <span class="version-label">SPECIFICATION 2.0 — REALM EXTENSION</span>
+
+    <ol class="index-list">
+      <li><a href="#v2-scope">Scope</a></li>
+      <li><a href="#v2-realms">Realms</a></li>
+      <li><a href="#v2-machine-location">Machine Location</a></li>
+      <li><a href="#v2-pointer-movement">Pointer Movement</a></li>
+      <li><a href="#v2-realm-symmetry">Realm Symmetry</a></li>
+      <li><a href="#v2-realm-state">Realm State</a></li>
+      <li><a href="#v2-loops-storage">Loops and Program Storage</a></li>
+      <li><a href="#v2-crashes">Crashes</a></li>
+      <li><a href="#v2-computational-model">Computational Model</a></li>
+      <li><a href="#v2-final-state">Final-State Encoding</a></li>
+      <li><a href="#v2-compatibility">Compatibility</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================================
+       VERSION 1.0
+       ============================================ -->
+
+  <section id="v1-introduction">
+    <h2>1. Introduction</h2>
+
+    <p>8 Towers is an esoteric programming language assembled from three ideas:</p>
+
+    <ol>
+      <li><strong>Taoism</strong> — things exist in relation to their opposites.</li>
+      <li><strong>The I Ching</strong> — three binary lines produce eight trigrams.</li>
+      <li><strong>The Towers of Hanoi</strong> — towers have rules, and the arrangement matters.</li>
+    </ol>
+
+    <p>There are eight primitive operations.</p>
+    <p>There are eight towers.</p>
+    <p>There are four opposing pairs.</p>
+
+    <p>
+      The language is intentionally small. Its rules follow from the structure of
+      the machine rather than from a large collection of special cases.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-terminology">
+    <h2>2. Terminology</h2>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Conventional concept</th>
+            <th>8 Towers term</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Register</td><td><strong>Tower</strong></td></tr>
+          <tr><td>Register value</td><td><strong>Tower value</strong></td></tr>
+          <tr><td>Register pointer</td><td><strong>Tower pointer</strong></td></tr>
+          <tr><td>Instruction</td><td><strong>Trigram</strong></td></tr>
+          <tr><td>Integer overflow/underflow</td><td><strong>Teleport</strong></td></tr>
+          <tr><td>Input</td><td><strong>Receive</strong></td></tr>
+          <tr><td>Output</td><td><strong>Give</strong></td></tr>
+          <tr><td>Writing source code</td><td><strong>Designing a tower</strong></td></tr>
+          <tr><td>Executing a program</td><td><strong>Building a tower</strong></td></tr>
+          <tr><td>Invalid machine state</td><td><strong>Crash</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-design-philosophy">
+    <h2>3. Design Philosophy</h2>
+
+    <p>The machine is organized around pairs.</p>
+
+    <p>The eight towers are:</p>
+
+    <pre><code><span class="tower">T0</span>  <span class="tower">T1</span>  <span class="tower">T2</span>  <span class="tower">T3</span>  <span class="tower">T4</span>  <span class="tower">T5</span>  <span class="tower">T6</span>  <span class="tower">T7</span></code></pre>
+
+    <p>with four opposing pairs:</p>
+
+    <pre><code><span class="tower">T0</span> ↔ <span class="tower">T7</span>
+<span class="tower">T1</span> ↔ <span class="tower">T6</span>
+<span class="tower">T2</span> ↔ <span class="tower">T5</span>
+<span class="tower">T3</span> ↔ <span class="tower">T4</span></code></pre>
+
+    <p><code>T0</code> is the <strong>Tower of Light</strong>.</p>
+    <p><code>T7</code> is the <strong>Tower of Darkness</strong>.</p>
+
+    <p>The eight trigrams are likewise paired:</p>
+
+    <pre><code><span class="bit">000</span> ↔ <span class="bit">111</span>
+<span class="bit">001</span> ↔ <span class="bit">110</span>
+<span class="bit">010</span> ↔ <span class="bit">101</span>
+<span class="bit">011</span> ↔ <span class="bit">100</span></code></pre>
+
+    <p>Their I Ching correspondences are:</p>
+
+    <pre><code>Earth     ↔ Heaven
+Mountain  ↔ Lake
+Water     ↔ Fire
+Wind      ↔ Thunder</code></pre>
+
+    <p>The operational pairs are:</p>
+
+    <pre><code>Move anticlockwise ↔ Move clockwise
+Increase           ↔ Decrease
+Receive            ↔ Give
+Begin loop         ↔ End loop</code></pre>
+
+    <p>The machine has no need for an operation without an opposite.</p>
+
+    <p>
+      Its state is constrained by the relationships between the towers. Arithmetic
+      may change a single tower, but validity is determined by the resulting
+      arrangement as a whole.
+    </p>
+
+    <p>This is not an additional feature layered onto the machine.</p>
+
+    <p>It is the machine.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-machine-state">
+    <h2>4. Machine State</h2>
+
+    <p>Each tower contains one signed 8-bit value:</p>
+
+    <pre><code><span class="number">-128</span> through <span class="number">127</span></code></pre>
+
+    <p>The machine also maintains:</p>
+
+    <ul>
+      <li>a <strong>tower pointer</strong>, identifying the active tower;</li>
+      <li>a <strong>program counter (PC)</strong>, identifying the next trigram to obtain;</li>
+      <li>a <strong>loop stack</strong>, containing positions of active loops.</li>
+    </ul>
+
+    <p>The tower selected by the pointer is the active tower, written <code>T[P]</code>.</p>
+
+    <p>At startup:</p>
+
+    <pre><code><span class="tower">T0</span> = <span class="number">0</span>
+<span class="tower">T1</span> = <span class="number">0</span>
+<span class="tower">T2</span> = <span class="number">0</span>
+<span class="tower">T3</span> = <span class="number">0</span>
+<span class="tower">T4</span> = <span class="number">0</span>
+<span class="tower">T5</span> = <span class="number">0</span>
+<span class="tower">T6</span> = <span class="number">0</span>
+<span class="tower">T7</span> = <span class="number">0</span></code></pre>
+
+    <p>The tower pointer points to <code>T0</code>.</p>
+    <p>The PC identifies the first trigram.</p>
+    <p>The loop stack is empty.</p>
+    <p>The all-zero state is valid.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-tower-invariant">
+    <h2>5. The Tower Invariant</h2>
+
+    <p>A machine state is valid only when:</p>
+
+    <pre><code><span class="tower">T0</span> ≤ <span class="tower">T1</span> ≤ <span class="tower">T6</span> ≤ <span class="tower">T7</span>
+<span class="tower">T0</span> ≤ <span class="tower">T2</span> ≤ <span class="tower">T5</span> ≤ <span class="tower">T7</span>
+<span class="tower">T0</span> ≤ <span class="tower">T3</span> ≤ <span class="tower">T4</span> ≤ <span class="tower">T7</span></code></pre>
+
+    <p>The three paths are independent except for their shared endpoints.</p>
+
+    <p>There is no requirement that:</p>
+
+    <pre><code><span class="tower">T1</span> ≤ <span class="tower">T2</span> ≤ <span class="tower">T3</span></code></pre>
+
+    <p>or:</p>
+
+    <pre><code><span class="tower">T4</span> ≤ <span class="tower">T5</span> ≤ <span class="tower">T6</span></code></pre>
+
+    <p>Equality is permitted.</p>
+
+    <p>For example:</p>
+
+    <pre><code><span class="tower">T0</span> = <span class="number">-100</span>
+<span class="tower">T1</span> = <span class="number">50</span>
+<span class="tower">T2</span> = <span class="number">-20</span>
+<span class="tower">T3</span> = <span class="number">75</span>
+<span class="tower">T4</span> = <span class="number">80</span>
+<span class="tower">T5</span> = <span class="number">30</span>
+<span class="tower">T6</span> = <span class="number">90</span>
+<span class="tower">T7</span> = <span class="number">100</span></code></pre>
+
+    <p>is valid because:</p>
+
+    <pre><code>-100 ≤  50 ≤  90 ≤ 100
+-100 ≤ -20 ≤  30 ≤ 100
+-100 ≤  75 ≤  80 ≤ 100</code></pre>
+
+    <p>Any operation that produces a state violating the invariant causes a crash.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-arithmetic">
+    <h2>6. Arithmetic and Teleports</h2>
+
+    <p>Tower arithmetic uses signed 8-bit arithmetic modulo 256.</p>
+
+    <p>Thus:</p>
+
+    <pre><code><span class="number">127</span> + <span class="number">1</span> = <span class="number">-128</span>
+<span class="number">-128</span> - <span class="number">1</span> = <span class="number">127</span></code></pre>
+
+    <p>Crossing from one extreme to the other is called a <strong>teleport</strong>.</p>
+
+    <p>A teleport is not itself a crash.</p>
+
+    <p>The resulting machine state must satisfy the tower invariant.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-program-representation">
+    <h2>7. Program Representation</h2>
+
+    <p>An 8 Towers source is a sequence of characters.</p>
+
+    <p>Only these characters have meaning:</p>
+
+    <pre><code><span class="bit">0</span>
+<span class="bit">1</span></code></pre>
+
+    <p>
+      Everything else is ignored. Source may therefore contain whitespace,
+      comments, decoration, ASCII art, or anything else that does not introduce
+      additional binary characters.
+    </p>
+
+    <p>After filtering, the remaining bits are grouped into threes.</p>
+
+    <p>Each group of three is a <strong>trigram</strong>.</p>
+
+    <p>For example:</p>
+
+    <pre><code>... <span class="bit">001</span> <span class="bit">001</span> <span class="bit">111</span> <span class="bit">110</span></code></pre>
+
+    <p>
+      represents the same source as any arrangement of characters producing those
+      same twelve binary characters.
+    </p>
+
+    <p>The source may be finite or infinite.</p>
+
+    <p>
+      For finite source, EOF after one or two bits of an incomplete trigram causes
+      a crash. No dangling bits allowed.
+    </p>
+
+    <p>
+      EOF immediately after a complete trigram permits normal termination if that
+      trigram has resolved successfully.
+    </p>
+
+    <p>
+      Source may be consumed incrementally. An implementation need not retain the
+      entire source in memory.
+    </p>
+
+    <p>
+      Only loops can move the PC backward. Once a source position can no longer be
+      reached, it may be discarded.
+    </p>
+
+    <p>The loop stack retains the positions that may still be revisited.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-execution">
+    <h2>8. Execution and the Eight Trigrams</h2>
+
+    <p>
+      The machine obtains the trigram identified by the PC and resolves it
+      <strong>completely</strong> before advancing.
+    </p>
+
+    <p>If the resulting state is invalid, the machine crashes.</p>
+
+    <p>Otherwise, ordinary execution advances the PC to the next trigram.</p>
+
+    <p>The eight trigrams are:</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Bits</th>
+            <th>Trigram</th>
+            <th>Operation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>000</code></td>
+            <td>Earth — <strong>Kūn</strong></td>
+            <td>Move anticlockwise</td>
+          </tr>
+          <tr>
+            <td><code>001</code></td>
+            <td>Mountain — <strong>Gèn</strong></td>
+            <td>Increase</td>
+          </tr>
+          <tr>
+            <td><code>010</code></td>
+            <td>Water — <strong>Kǎn</strong></td>
+            <td>Receive</td>
+          </tr>
+          <tr>
+            <td><code>011</code></td>
+            <td>Wind — <strong>Xùn</strong></td>
+            <td>Begin loop</td>
+          </tr>
+          <tr>
+            <td><code>100</code></td>
+            <td>Thunder — <strong>Zhèn</strong></td>
+            <td>End loop</td>
+          </tr>
+          <tr>
+            <td><code>101</code></td>
+            <td>Fire — <strong>Lí</strong></td>
+            <td>Give</td>
+          </tr>
+          <tr>
+            <td><code>110</code></td>
+            <td>Lake — <strong>Duì</strong></td>
+            <td>Decrease</td>
+          </tr>
+          <tr>
+            <td><code>111</code></td>
+            <td>Heaven — <strong>Qián</strong></td>
+            <td>Move clockwise</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="v1-moving-around">Moving Around</h3>
+
+    <p>The tower pointer moves around the eight towers:</p>
+
+    <pre><code><span class="tower">T0</span> → <span class="tower">T1</span> → <span class="tower">T2</span> → <span class="tower">T3</span> → <span class="tower">T4</span> → <span class="tower">T5</span> → <span class="tower">T6</span> → <span class="tower">T7</span> → <span class="tower">T0</span></code></pre>
+
+    <p><code>111</code> moves one position clockwise.</p>
+    <p><code>000</code> moves one position anticlockwise.</p>
+    <p>Neither changes a tower value.</p>
+
+    <h3 id="v1-changing-values">Changing Values</h3>
+
+    <p><code>001</code> increases the active tower by one.</p>
+    <p><code>110</code> decreases the active tower by one.</p>
+
+    <p>Afterward, the tower invariant is checked.</p>
+
+    <h3 id="v1-receiving">Receiving</h3>
+
+    <p>
+      <code>010</code> receives exactly one byte from standard input and stores it
+      as a signed 8-bit value in the active tower.
+    </p>
+
+    <p>Receive waits until a byte is available.</p>
+
+    <p>
+      There is no special input-EOF value or sentinel byte.
+      <code>00000000</code> is an ordinary byte.
+    </p>
+
+    <p>The resulting state must satisfy the tower invariant.</p>
+
+    <h3 id="v1-giving">Giving</h3>
+
+    <p>
+      <code>101</code> writes the active tower's eight-bit value to standard output.
+    </p>
+
+    <p>The signed interpretation does not alter the emitted byte.</p>
+
+    <p>For example:</p>
+
+    <pre><code>Tower value:       <span class="number">65</span>
+Eight-bit value:   <span class="bit">01000001</span>
+Output:            ASCII 'A'</code></pre>
+
+    <p>and:</p>
+
+    <pre><code>Tower value:       <span class="number">-1</span>
+Eight-bit value:   <span class="bit">11111111</span>
+Output:            byte <span class="number">255</span></code></pre>
+
+    <p>Give does not modify the active tower.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-loops">
+    <h2>9. Loops</h2>
+
+    <p><code>011</code> begins a loop.</p>
+    <p><code>100</code> ends one.</p>
+
+    <p>The active tower is the loop condition.</p>
+
+    <p>When <code>011</code> is reached:</p>
+
+    <ul>
+      <li>
+        if the active tower is zero, execution skips to the instruction after the
+        matching <code>100</code>;
+      </li>
+      <li>
+        otherwise, the position of the <code>011</code> is pushed onto the loop stack
+        and execution continues.
+      </li>
+    </ul>
+
+    <p>When <code>100</code> is reached:</p>
+
+    <ul>
+      <li>
+        if the active tower is zero, the loop frame is popped and execution
+        continues after the <code>100</code>;
+      </li>
+      <li>
+        otherwise, execution returns to the <code>011</code> position stored in the
+        top loop frame.
+      </li>
+    </ul>
+
+    <p>The loop stack is a LIFO stack of loop positions.</p>
+
+    <p>It does not save tower values or the tower pointer.</p>
+
+    <p>Nested loops are permitted and often preferred.</p>
+
+    <p>
+      The active tower is evaluated whenever a loop boundary is reached. Since the
+      tower pointer may move during a loop, successive evaluations may involve
+      different towers.
+    </p>
+
+    <p>An empty loop:</p>
+
+    <pre><code>... <span class="bit">011</span> <span class="bit">100</span> ...</code></pre>
+
+    <p>is an infinite loop when entered with a nonzero condition.</p>
+
+    <p>
+      When a zero-valued <code>011</code> is skipped, its matching <code>100</code> is
+      located by scanning forward and accounting for nested loops. Such cases
+      should not be recorded in the loop stack.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-loop-errors">
+    <h2>10. Loop Errors</h2>
+
+    <p>An unmatched <code>100</code> causes a crash.</p>
+
+    <p>
+      If execution reaches EOF while an entered loop still requires another
+      trigram, the machine crashes.
+    </p>
+
+    <p>EOF is not an instruction and does not close a loop.</p>
+
+    <p>For example:</p>
+
+    <pre><code>... <span class="bit">011</span> <span class="bit">001</span> EOF</code></pre>
+
+    <p>
+      with a nonzero active tower enters a loop whose body has no matching
+      <code>100</code>.
+    </p>
+
+    <p>The machine crashes when it requires the next trigram.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-crashes">
+    <h2>11. Crashes and Termination</h2>
+
+    <p>
+      A <strong>crash</strong> occurs when a semantic requirement of the machine
+      cannot be satisfied.
+    </p>
+
+    <p>Building stops immediately. Consider HALT.</p>
+
+    <p>The machine does not repair or roll back the state.</p>
+
+    <p>
+      A design has <strong>normal termination</strong> when its final instruction
+      resolves successfully and the machine then requests another trigram and
+      encounters program EOF.
+    </p>
+
+    <p>There is no explicit halt instruction.</p>
+
+    <p>A design that neither reaches EOF nor crashes executes indefinitely.</p>
+
+    <p>A teleport is not itself a crash; only the resulting state matters.</p>
+
+    <p>Diagnostics are implementation-dependent.</p>
+
+    <p>For example:</p>
+
+    <pre><code>8 Towers crashed.
+
+Trigram 24: Illegal tower state</code></pre>
+
+    <p>is sufficient.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v1-designing">
+    <h2>12. Designing a Tower</h2>
+
+    <p>
+      Writing 8 Towers source code is called <strong>designing a tower</strong>.
+    </p>
+
+    <p>
+      Since only <code>0</code> and <code>1</code> survive lexing, source should be
+      arranged visually as ASCII art or otherwise decorated without affecting its
+      meaning.
+    </p>
+
+    <p>The shape of the source is conventional, not semantic.</p>
+
+    <p>Source is conventionally formatted as an ASCII-art tower:</p>
+
+    <pre><code>                    00000
+                    0   1
+                    1   1
+                0001110001111
+                1           1
+                1           1
+                1    111    1
+                1    111    1
+           000000000     000111000
+           1                     1
+           1    111       000    0
+           0    011       100    0
+           0                     0
+           0        00011        1
+           1        1   1        1
+           1        1   0        0
+           0        11111        1
+           1                     1
+        10001111110000001111110001110
+        00111111000111000000111000111</code></pre>
+
+    <p>The lexer asks only:</p>
+
+    <pre><code>Is this character a 0?
+Is this character a 1?</code></pre>
+
+    <p>Everything else is simply not part of the tower.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <!-- ============================================
+       VERSION 2.0
+       ============================================ -->
+
+  <div class="version-divider" id="v2">
+    <h1>8 Towers</h1>
+    <h2>Formal Language Specification 2.0 — Realm Extension</h2>
+  </div>
+
+  <blockquote>
+    <p>
+      <strong>
+        Version 2.0 conforms exactly to Formal Language Specification 1.0
+        except as explicitly specified herein.
+      </strong>
+    </p>
+    <p>Eight towers.</p>
+    <p>Forever.</p>
+  </blockquote>
+
+
+  <section id="v2-scope">
+    <h2>1. Scope</h2>
+
+    <p>This document specifies the <strong>Realm Extension</strong> to 8 Towers.</p>
+
+    <p>
+      It does not replace or reproduce Formal Language Specification 1.0.
+      All rules of 1.0 remain normative except where this document explicitly
+      specifies otherwise.
+    </p>
+
+    <p>
+      Version 2.0 extends the machine with an unbounded address space of
+      eight-tower structures called <strong>realms</strong>.
+    </p>
+
+    <p>No new trigram is introduced.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-realms">
+    <h2>2. Realms</h2>
+
+    <p>
+      The eight towers defined by 1.0 constitute <strong>realm 0</strong>.
+    </p>
+
+    <p>The machine has an unbounded sequence of realms:</p>
+
+    <pre><code>... R-3 R-2 R-1 R0 R+1 R+2 R+3 ...</code></pre>
+
+    <p>Each realm contains eight towers:</p>
+
+    <pre><code>T0 T1 T2 T3 T4 T5 T6 T7</code></pre>
+
+    <p>A tower is identified by its realm and tower number:</p>
+
+    <pre><code>R0(T3)
+R-1(T7)
+R+12(T0)</code></pre>
+
+    <p>
+      Realm numbers are signed integers with no upper or lower bound.
+    </p>
+
+    <p>
+      A realm whose towers are all zero is a <strong>zero realm</strong>.
+      Every realm outside the established interval is implicitly a zero realm,
+      and an implementation need not allocate storage for zero realms.
+    </p>
+
+    <p>The address space is therefore infinite.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-machine-location">
+    <h2>3. Machine Location</h2>
+
+    <p>In addition to the 1.0 machine state, the machine maintains:</p>
+
+    <pre><code>current realm
+lowest realm
+highest realm</code></pre>
+
+    <p>The active tower is identified by its realm and tower pointer:</p>
+
+    <pre><code>R0(T0)</code></pre>
+
+    <p>At startup:</p>
+
+    <pre><code>current realm = 0
+tower pointer  = T0
+lowest realm   = 0
+highest realm  = 0</code></pre>
+
+    <p>
+      All towers in realm 0 are zero. The program counter and loop stack are
+      initialized exactly as specified by 1.0.
+    </p>
+
+    <p>
+      The realm fields are not source-level variables and cannot be accessed
+      directly by a program.
+    </p>
+
+    <p>The machine knows where it is. The program does not get to ask.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-pointer-movement">
+    <h2>4. Pointer Movement</h2>
+
+    <p>
+      Within a realm, <code>000</code> and <code>111</code> retain their 1.0
+      semantics.
+    </p>
+
+    <p>At a realm boundary, the pointer continues into the adjacent realm:</p>
+
+    <pre><code><span class="bit">000</span>:
+R(r)(T0) → R(r-1)(T7)
+
+<span class="bit">111</span>:
+R(r)(T7) → R(r+1)(T0)</code></pre>
+
+    <p>Thus the pointer proceeds through the realms:</p>
+
+    <pre><code>... R-2 → R-1 → R0 → R+1 → R+2 ...</code></pre>
+
+    <p>
+      A movement into an already-established realm proceeds normally.
+      A movement into a previously unestablished realm establishes it only if
+      doing so preserves the realm symmetry invariant in Section 5.
+    </p>
+
+    <p>
+      There is no express route to <code>R+10<sup>12</sup></code>. The machine has many
+      virtues, and it demands the programmer, too, must be patient.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-realm-symmetry">
+    <h2>5. Realm Symmetry</h2>
+
+    <p>
+      Established realms always form a contiguous interval containing
+      <code>R0</code>.
+    </p>
+
+    <p>
+      The numbers of established negative and positive realms may differ by at
+      most one:
+    </p>
+
+    <pre><code>lowest realm ≤ 0 ≤ highest realm
+
+||lowest realm| - highest realm| ≤ 1</code></pre>
+
+    <p>
+      A pointer movement into a previously unestablished realm establishes that
+      realm only if the resulting established interval satisfies the invariant.
+    </p>
+
+    <p>
+      The frontier therefore advances alternately between the negative and
+      positive directions. For example, both of the following are valid:
+    </p>
+
+    <pre><code>[0,0] → [-1,0] → [-1,+1] → [-2,+1] ...</code></pre>
+
+    <pre><code>[0,0] → [0,+1] → [-1,+1] → [-1,+2] ...</code></pre>
+
+    <p>From:</p>
+
+    <pre><code>[-1,0]</code></pre>
+
+    <p>
+      establishing <code>R-2</code> is a crash. <code>R+1</code> must be established
+      first.
+    </p>
+
+    <p>From:</p>
+
+    <pre><code>[-2,+1]</code></pre>
+
+    <p>
+      establishing <code>R-3</code> is a crash. <code>R+2</code> must be established
+      first.
+    </p>
+
+    <p>
+      More generally, any attempted establishment that would make:
+    </p>
+
+    <pre><code>||lowest realm| - highest realm| &gt; 1</code></pre>
+
+    <p>is a crash.</p>
+
+    <p>
+      A movement into an already-established realm does not alter the established
+      interval and is permitted subject to the other rules of 1.0.
+    </p>
+
+    <p>
+      Establishment is permanent: returning a realm to all zero values does not
+      remove it from the established interval. It simply frees up space.
+    </p>
+
+    <p>Once a realm has been admitted to the map, the map remembers.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-realm-state">
+    <h2>6. Realm State</h2>
+
+    <p>The 1.0 tower invariant applies independently to every realm.</p>
+
+    <p>For every realm <code>r</code>:</p>
+
+    <pre><code>R(r)(T0) ≤ R(r)(T1) ≤ R(r)(T6) ≤ R(r)(T7)
+R(r)(T0) ≤ R(r)(T2) ≤ R(r)(T5) ≤ R(r)(T7)
+R(r)(T0) ≤ R(r)(T3) ≤ R(r)(T4) ≤ R(r)(T7)</code></pre>
+
+    <p>There is no ordering relationship between different realms.</p>
+
+    <p>
+      Realm symmetry constrains <strong>where the machine may go</strong>.
+      The tower invariant constrains <strong>which values may exist there</strong>.
+    </p>
+
+    <p>
+      Entering a newly established realm initializes its eight towers to zero.
+      All subsequent tower operations retain their 1.0 semantics.
+    </p>
+
+    <p>The local laws remain reassuringly familiar.</p>
+
+    <p>It is the geography that has become strange.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-loops-storage">
+    <h2>7. Loops and Program Storage</h2>
+
+    <p>Loop semantics remain exactly as specified by 1.0.</p>
+
+    <p>
+      In particular, the loop stack retains the source positions of active loop
+      starts so that execution can jump backward to them. Realm movement does not
+      alter loop matching or control flow.
+    </p>
+
+    <p>
+      Program source and realm storage are separate concerns. An implementation
+      need not retain the entire source in memory merely because 2.0 provides
+      unbounded machine memory.
+    </p>
+
+    <p>
+      Realm storage SHOULD be sparse. Zero realms need not consume physical
+      storage, and distant nonzero realms do not require allocation of the
+      intervening zero realms.
+    </p>
+
+    <p>Physical storage is not observable by a program.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-crashes">
+    <h2>8. Crashes</h2>
+
+    <p>All 1.0 crash conditions remain in force.</p>
+
+    <p>
+      Version 2.0 adds one crash condition: a pointer movement that would
+      establish a realm outside the permitted symmetric interval crashes.
+    </p>
+
+    <p>
+      In particular, any pointer movement that would make the resulting
+      established interval violate:
+    </p>
+
+    <pre><code>||lowest realm| - highest realm| ≤ 1</code></pre>
+
+    <p>is a crash.</p>
+
+    <p>For example, from:</p>
+
+    <pre><code>[-1,0]</code></pre>
+
+    <p>
+      entering <code>R-2</code> crashes. <code>R+1</code> must be established first.
+    </p>
+
+    <p>
+      The crash occurs while resolving the pointer movement. The machine does not
+      partially enter the new realm.
+    </p>
+
+    <p>No intermediate realm state is observable.</p>
+
+    <p>The machine either extends the frontier or refuses the expedition.</p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-computational-model">
+    <h2>9. Computational Model</h2>
+
+    <p>
+      The eight towers of a 1.0 machine provide a finite amount of writable data.
+    </p>
+
+    <p>
+      Version 2.0 adds an unbounded sequence of such storage regions. Information
+      may therefore be retained at arbitrarily distant positions.
+    </p>
+
+    <p>
+      The realm sequence provides an unbounded tape, making 2.0
+      <strong>Turing-complete</strong>.
+    </p>
+
+    <p>
+      The eight-tower machine has acquired an infinite horizon and enough memory
+      to leave things there.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-final-state">
+    <h2>10. Final-State Encoding</h2>
+
+    <p>
+      The final machine state may be encoded as an arbitrary binary sequence.
+      Neither big nor little endian concerns need to be considered.
+    </p>
+
+    <p>For each realm:</p>
+
+    <pre><code>zero realm    → 0
+nonzero realm → 1</code></pre>
+
+    <p>A realm is nonzero if any of its eight towers is nonzero.</p>
+
+    <p>
+      The resulting bits are ordered by increasing realm number. Leading and
+      trailing zero realms are omitted.
+    </p>
+
+    <p>For example:</p>
+
+    <pre><code>R-2 = zero
+R-1 = nonzero
+R0  = nonzero
+R+1 = zero
+R+2 = nonzero</code></pre>
+
+    <p>produces:</p>
+
+    <pre><code>1101</code></pre>
+
+    <p>If every realm is zero, the resulting binary sequence is empty.</p>
+
+    <p>
+      The encoding applies to the final machine state regardless of whether
+      execution terminated normally or crashed (HALT is syntax sugar for a crash).
+    </p>
+
+    <p>
+      The resulting binary sequence has no intrinsic interpretation. It may be
+      source code, machine code, data, another 8 Towers design, or something
+      completely incomprehensible.
+    </p>
+
+    <p>
+      If you want to produce an 8 Towers program, you can feed it to another
+      8 Towers machine.
+    </p>
+
+    <p>
+      If you want to produce x86 machine code, point an appropriate machine at it.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <section id="v2-compatibility">
+    <h2>11. Compatibility</h2>
+
+    <p>
+      A 2.0 implementation behaves as specified by 1.0 until a pointer movement
+      crosses a realm boundary.
+    </p>
+
+    <p>In 1.0:</p>
+
+    <pre><code>T7 → T0
+T0 → T7</code></pre>
+
+    <p>In 2.0:</p>
+
+    <pre><code>R(r)(T7) --111--&gt; R(r+1)(T0)
+R(r)(T0) --000--&gt; R(r-1)(T7)</code></pre>
+
+    <p>
+      Therefore, 1.0 programs that rely on the pointer eventually wrapping around
+      the eight towers are not necessarily behaviorally identical under 2.0.
+    </p>
+
+    <p>
+      Programs that do not cross a realm boundary retain their 1.0 behavior.
+    </p>
+
+    <p>
+      The old rules remain mostly intact, but 2.0 may be breaking.
+    </p>
+
+    <p>
+      They have simply been given considerably more country in which to operate.
+    </p>
+
+    <p class="back-to-index"><a href="#top">↑ Back to index</a></p>
+  </section>
+
+
+  <footer>
+    <p>
+      <a href="#top">8 Towers</a> · Formal Language Specification 1.0 / 2.0
+    </p>
+  </footer>
+
+</main>
+
+</body>
+</html>
